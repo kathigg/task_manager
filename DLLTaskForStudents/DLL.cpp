@@ -25,6 +25,17 @@ DLL::DLL(Task *newTask) {
 /*  Start of student code                                            */
 /*********************************************************************/
 void DLL::push(Task *newTask) {
+    DNode* newNode = new DNode(newTask);
+
+    if (first == nullptr) {
+        first = newNode;
+        last = newNode;
+    } else {
+        last-> next = newNode;
+        newNode -> prev = last;
+        last = newNode;
+    }
+    ct++;
     /* (6 pts)
      *Write the push method, which creates a new DNode with the data
      *newTask, and adds the new node to the end of the list.
@@ -38,6 +49,11 @@ void DLL::push(Task *newTask) {
 }
 
 void DLL::printForward() {
+    DNode* current = first;
+    while (current != nullptr) {
+        current->task->printTask();
+        current = current->next;
+    }
     /*(5 pts)
      *this method prints out the list in the order in which data was entered
      *(e.g., the first task to the last task, also known as First in, First out,
@@ -48,6 +64,11 @@ void DLL::printForward() {
 }
 
 void DLL::printBackward() {
+    DNode* current = last;
+    while (current != nullptr) {
+        current->task->printTask();
+        current = current->prev;
+    }
     /* (5 pts)
      * this method prints out the list from the last task entered back to
      * the first task entered.  This is also known as LIFO (Last in, first
@@ -66,6 +87,16 @@ void DLL::printBackward() {
  * Manager's Menu
  * *******************************************************************/
 DNode *DLL::findTask(string taskdescr) {
+    DNode* current = first;
+    while (current != nullptr) {
+        if (current->task->description == taskdescr) {
+            current->task->printTask();
+            return current;
+        }
+        current = current->next;
+    }
+    cout<<taskdescr<<"not found";
+    return nullptr;
     /* (6 pts)
      * write a method that searches through a list for the node with
      * taskdescr as its data.  Print the node's task (printTask()) and
@@ -75,6 +106,10 @@ DNode *DLL::findTask(string taskdescr) {
 }
 
 void DLL::changePriority(string descr) {
+    DNode* target = findTask(descr);
+    if (target != nullptr) {
+        target->task->changePriority();
+    }
     /* (3 pts)
      * this should be a short method that uses the findTask method to
      * find the appropriate node and then uses the task method
@@ -84,6 +119,10 @@ void DLL::changePriority(string descr) {
 }
 
 void DLL::changeStatus(string descr, bool status) {
+    DNode* target = findTask(descr);
+    if (target!= nullptr) {
+        target->task->setCompleted(status);
+    }
     /* (3 pts)
      * Another short method that uses the findTask method to
  * find the appropriate node and then uses the task method
@@ -104,6 +143,18 @@ void DLL::changeStatus(string descr, bool status) {
  * methods
  */
 DNode *DLL::removeFirst() {
+    if (first == nullptr) {
+        return nullptr;
+    }
+    DNode* temp = first;
+    first = first->next;
+
+    if (first!=nullptr) {
+        first->prev = nullptr;
+    }
+    temp->next = nullptr;
+    return temp;
+
     /* (4 pts)
      * this method removes the first node in a list and returns that node
      * It must reset the first pointer to point to the new first node.
@@ -113,6 +164,25 @@ DNode *DLL::removeFirst() {
 }
 
 DNode *DLL::pop() {
+    if (ct == 0) {
+        return nullptr;
+    }
+    DNode *lastNode = last;
+    if (first->next == nullptr && last->prev==nullptr) {
+        first = nullptr;
+        last = nullptr;
+        ct = 0;
+        return lastNode;
+    } else {
+        last = last->prev;
+        last->next = nullptr;
+        lastNode->prev = nullptr;
+        ct--;
+        return lastNode;
+    }
+
+
+
     /* write a method that removes the last node from the list and returns
      * it
      * If it is removing the last node in the list, it sets both the first
@@ -123,6 +193,22 @@ DNode *DLL::pop() {
      */
 }
 DNode *DLL::removeThisNode(DNode *tmp) {
+    if (last == nullptr) {
+        return nullptr;
+    }
+
+    DNode* temp = last;
+    if (first == last) {
+        first = nullptr;
+        last = nullptr;
+    } else {
+        last = last->prev;
+        last->next = nullptr;
+    }
+    temp->prev = nullptr;
+    temp->next = nullptr;
+
+    return temp;
     /* (5 pts)
      * this method removes tmp from the list.  It assumes the node
      * being removed is neither the first node nor the last node
@@ -132,6 +218,19 @@ DNode *DLL::removeThisNode(DNode *tmp) {
 }
 
 DNode *DLL::removeTask(string taskdescr) {
+    DNode* node = findTask(taskdescr);
+    if (node == nullptr) {
+        return nullptr;
+    }
+    if (node == first) {
+        return removeFirst();
+    }
+    else if (node == last) {
+        return pop();
+    }
+    else {
+        return removeThisNode(node);
+    }
     /* (4 pts)
      * This method finds the node whose task description matches taskdescr
      *(using findTask).  If the node to be removed is the first node,
@@ -148,6 +247,7 @@ DNode *DLL::removeTask(string taskdescr) {
  * list, you can write and test the removeCompleted method as follows:
  */
 void DLL::removeCompleted () {
+
     /* (5 pts)
      * this method traverses the list and removes all node whose task
      * completed field has been set to true (aka the task has been
@@ -162,6 +262,15 @@ void DLL::removeCompleted () {
  *  helper functions so they're a bit hard to test right now.
  *****************************************************************/
 void DLL::insertAtBeginning(DNode *node) {
+    if (first == nullptr) {
+        first = node;
+        last = node;
+    } else {
+        node->next = first;
+        first->prev = node;
+        first = node;
+    }
+    ct++;
     // (5 pts)
     // insert the node *node at the beginning of the list
     // It adjusts the pointers appropriately, and resets the first
@@ -169,6 +278,15 @@ void DLL::insertAtBeginning(DNode *node) {
 }
 
 void DLL::push(DNode *node) {
+    if (first == nullptr) {
+        first = node;
+        last = node;
+    } else {
+        last->next = node;
+        node->prev = last;
+        last = node;
+    }
+    ct++;
     // (4 pts)
     // This is an overload of the push method, in which we push an actual
     // node onto the end of the list
@@ -177,6 +295,16 @@ void DLL::push(DNode *node) {
     // It increases the ct field.
 }
 void DLL::insertHere(DNode *before, DNode *node) {
+    if (before == nullptr) return;
+    node->next = before->next;
+    node->prev = before;
+    if (before->next != nullptr) {
+        before->next->prev = node;
+    } else {
+        last = node;
+    }
+    before->next = node;
+    ct++;
     /* (5 pts)
      * this method inserts the node right after the node before.
      * it increases the count field
