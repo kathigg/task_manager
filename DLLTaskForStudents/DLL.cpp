@@ -181,8 +181,6 @@ DNode *DLL::pop() {
         return lastNode;
     }
 
-
-
     /* write a method that removes the last node from the list and returns
      * it
      * If it is removing the last node in the list, it sets both the first
@@ -247,7 +245,19 @@ DNode *DLL::removeTask(string taskdescr) {
  * list, you can write and test the removeCompleted method as follows:
  */
 void DLL::removeCompleted () {
-
+    /* Pseudo Code:
+    look at the current node.
+    does this node has a task that is completed? (task completed field is true)
+    removeThisNode 
+    */
+    DNode* current = first;
+    while (current != nullptr){ 
+        if (current->task->completed == true) {
+            DNode* toRemove = current;
+            removeThisNode(toRemove);
+        }
+        current = current->next;
+    }
     /* (5 pts)
      * this method traverses the list and removes all node whose task
      * completed field has been set to true (aka the task has been
