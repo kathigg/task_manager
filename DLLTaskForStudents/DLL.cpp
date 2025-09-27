@@ -196,17 +196,25 @@ DNode *DLL::removeThisNode(DNode *tmp) {
     }
 
     DNode* temp = last;
-    if (first == last) {
-        first = nullptr;
-        last = nullptr;
-    } else {
-        last = last->prev;
-        last->next = nullptr;
-    }
-    temp->prev = nullptr;
-    temp->next = nullptr;
+        if (!tmp) return nullptr;
 
-    return temp;
+    if (tmp == first) {
+        return removeFirst();
+    }
+    if (tmp == last) {
+        return pop();
+    }
+
+    // unlink tmp from neighbors
+    tmp->prev->next = tmp->next;
+    tmp->next->prev = tmp->prev;
+
+    tmp->prev = nullptr;
+    tmp->next = nullptr;
+
+    ct--;
+
+    return tmp;
     /* (5 pts)
      * this method removes tmp from the list.  It assumes the node
      * being removed is neither the first node nor the last node
@@ -334,6 +342,42 @@ void DLL::sortByPriority() {
      * all the tasks with a priority of 3
      * You can test this method using the appropriate menu option.
      */
+
+    /* pseudo code
+    loop through the list. 
+    if the first node 
+    */
+   if (ct < 2) return; 
+
+   DLL sortedList; 
+
+   while (ct > 0) { 
+    DNode* minNode = first;
+    DNode* current = first->next;
+
+    while (current != nullptr) {
+        if (current->task->priority < minNode->task->priority){ 
+            minNode = current; 
+        }
+        current = current->next;
+    }
+
+    if (minNode == first){
+    removeFirst();
+   } else if (minNode == last){
+    pop();
+   } else {
+    removeThisNode(minNode);
+   }
+
+   sortedList.push(minNode);
+   } 
+   first = sortedList.first;
+   last = sortedList.last;
+   ct = sortedList.ct;
+
+   sortedList.first = sortedList.last = nullptr;
+   sortedList.ct = 0; 
 }
 void DLL::sortByTaskNum() {
     /* (8 pts)
@@ -343,7 +387,39 @@ void DLL::sortByTaskNum() {
      * rearranged your nodes, you can then sort using this method.
      * It's also a menu option.
      */
+    if (ct < 2) return; 
+    
+    DLL sortedList;
+
+    while (ct > 0){
+        DNode* minNode = first;
+        DNode* current = first->next;
+
+        while (current != nullptr){
+            if (current->task->taskNum < minNode->task->taskNum){
+                minNode = current;
+            }
+            current = current->next;
+        }
+        if (minNode == first){
+            removeFirst();
+        } else if (minNode == last){
+            pop();
+        }
+        else { 
+            removeThisNode(minNode);
+        }
+        sortedList.push(minNode);
+    }
+
+    first = sortedList.first; 
+    last = sortedList.last; 
+    ct = sortedList.ct; 
+    sortedList.first = sortedList.last = nullptr; 
+    sortedList.ct = 0; 
 }
+
+
 /**********************************************************************/
 /* Step 8
  * You're almost done!!!!  This is easy.  Write the destructor for the
@@ -354,6 +430,10 @@ DLL::~DLL() {
      * write the destructor for the DLL .  Just delete all the nodes
      * in the list.
      */
+    for (int i = 0; i < ct; i++){
+        DNode* temp = removeFirst();
+        delete temp;
+    }
 }
 
 

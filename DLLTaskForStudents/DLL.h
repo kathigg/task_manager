@@ -45,7 +45,7 @@ public:
     DNode *removeTask(string taskdescr);
     DNode *removeThisNode(DNode *tmp);
     DNode *removeFirst();
-    DNode *DLL::pop();
+    DNode *pop();
 
     /********************************************************************/
     /* Step 4
