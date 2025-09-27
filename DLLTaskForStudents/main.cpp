@@ -1,3 +1,5 @@
+// Coded by Kathleen Higgins and Aastha Desai, 9/26/2025
+
 #include <iostream>
 
 #include "Manager.h"

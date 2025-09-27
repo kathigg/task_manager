@@ -1,3 +1,5 @@
+// Coded by Kathleen Higgins and Aastha Desai, 9/26/2025
+
 //
 // Created by Deb on 9/14/2025.
 //
@@ -143,16 +145,25 @@ void DLL::changeStatus(string descr, bool status) {
  * methods
  */
 DNode *DLL::removeFirst() {
-    if (first == nullptr) {
+        if (first == nullptr) {
         return nullptr;
     }
+
     DNode* temp = first;
     first = first->next;
 
-    if (first!=nullptr) {
+    if (first != nullptr) {
         first->prev = nullptr;
+    } else {
+        // list became empty
+        last = nullptr;
     }
+
+    // detach temp completely
     temp->next = nullptr;
+    temp->prev = nullptr;
+
+    ct--;                       // important: decrement count
     return temp;
 
     /* (4 pts)
@@ -164,19 +175,28 @@ DNode *DLL::removeFirst() {
 }
 
 DNode *DLL::pop() {
-    if (ct == 0) {
+        if (ct == 0 || last == nullptr) {
         return nullptr;
     }
+
     DNode *lastNode = last;
-    if (first->next == nullptr && last->prev==nullptr) {
+
+    if (first == last) {
+        // single node in list
         first = nullptr;
         last = nullptr;
         ct = 0;
+        lastNode->prev = nullptr;
+        lastNode->next = nullptr;
         return lastNode;
     } else {
+        // more than one node
         last = last->prev;
-        last->next = nullptr;
+        if (last) last->next = nullptr;
+
         lastNode->prev = nullptr;
+        lastNode->next = nullptr;
+
         ct--;
         return lastNode;
     }
@@ -191,12 +211,8 @@ DNode *DLL::pop() {
      */
 }
 DNode *DLL::removeThisNode(DNode *tmp) {
-    if (last == nullptr) {
-        return nullptr;
-    }
-
-    DNode* temp = last;
-        if (!tmp) return nullptr;
+    if (tmp == nullptr) return nullptr;    // nothing to remove
+    if (first == nullptr) return nullptr;  // empty list
 
     if (tmp == first) {
         return removeFirst();
@@ -205,15 +221,15 @@ DNode *DLL::removeThisNode(DNode *tmp) {
         return pop();
     }
 
-    // unlink tmp from neighbors
-    tmp->prev->next = tmp->next;
-    tmp->next->prev = tmp->prev;
+    // unlink tmp from neighbors (safe because tmp is not first/last)
+    if (tmp->prev) tmp->prev->next = tmp->next;
+    if (tmp->next) tmp->next->prev = tmp->prev;
 
+    // detach tmp
     tmp->prev = nullptr;
     tmp->next = nullptr;
 
     ct--;
-
     return tmp;
     /* (5 pts)
      * this method removes tmp from the list.  It assumes the node
@@ -259,12 +275,15 @@ void DLL::removeCompleted () {
     removeThisNode 
     */
     DNode* current = first;
-    while (current != nullptr){ 
-        if (current->task->completed == true) {
-            DNode* toRemove = current;
-            removeThisNode(toRemove);
+    while (current != nullptr) {
+        DNode* next = current->next;   // save next BEFORE potential removal
+        if (current->task && current->task->completed == true) {
+            // remove current (this returns the node, detached)
+            DNode* removed = removeThisNode(current);
+            // optionally delete removed->task / removed if higher-level code expects it
+            // but leave deletion policy same as original design
         }
-        current = current->next;
+        current = next;
     }
     /* (5 pts)
      * this method traverses the list and removes all node whose task
@@ -280,6 +299,11 @@ void DLL::removeCompleted () {
  *  helper functions so they're a bit hard to test right now.
  *****************************************************************/
 void DLL::insertAtBeginning(DNode *node) {
+    if (node == nullptr) return;
+
+    node->prev = nullptr;
+    node->next = nullptr;
+
     if (first == nullptr) {
         first = node;
         last = node;
@@ -296,6 +320,12 @@ void DLL::insertAtBeginning(DNode *node) {
 }
 
 void DLL::push(DNode *node) {
+    if (node == nullptr) return;
+
+    // detach node from any previous structure
+    node->next = nullptr;
+    node->prev = nullptr;
+
     if (first == nullptr) {
         first = node;
         last = node;
@@ -347,37 +377,36 @@ void DLL::sortByPriority() {
     loop through the list. 
     if the first node 
     */
-   if (ct < 2) return; 
+    if (ct < 2) return;
 
-   DLL sortedList; 
+    DLL sortedList; 
 
-   while (ct > 0) { 
-    DNode* minNode = first;
-    DNode* current = first->next;
+    while (ct > 0) {
+        // find the node with the smallest priority
+        DNode* minNode = first;
+        DNode* current = first->next;
 
-    while (current != nullptr) {
-        if (current->task->priority < minNode->task->priority){ 
-            minNode = current; 
+        while (current != nullptr) {
+            if (current->task->priority < minNode->task->priority) {
+                minNode = current;
+            }
+            current = current->next;
         }
-        current = current->next;
+
+        // remove minNode from this list
+        removeThisNode(minNode);
+
+        // add it to the end of sortedList
+        sortedList.push(minNode);
     }
 
-    if (minNode == first){
-    removeFirst();
-   } else if (minNode == last){
-    pop();
-   } else {
-    removeThisNode(minNode);
-   }
+    // take ownership of sortedList’s contents
+    first = sortedList.first;
+    last = sortedList.last;
+    ct = sortedList.ct;
 
-   sortedList.push(minNode);
-   } 
-   first = sortedList.first;
-   last = sortedList.last;
-   ct = sortedList.ct;
-
-   sortedList.first = sortedList.last = nullptr;
-   sortedList.ct = 0; 
+    sortedList.first = sortedList.last = nullptr;
+    sortedList.ct = 0;
 }
 void DLL::sortByTaskNum() {
     /* (8 pts)
@@ -387,36 +416,35 @@ void DLL::sortByTaskNum() {
      * rearranged your nodes, you can then sort using this method.
      * It's also a menu option.
      */
-    if (ct < 2) return; 
-    
+    if (ct < 2) return;
+
     DLL sortedList;
 
-    while (ct > 0){
+    while (ct > 0) {
+        // find the node with the smallest taskNum
         DNode* minNode = first;
         DNode* current = first->next;
 
-        while (current != nullptr){
-            if (current->task->taskNum < minNode->task->taskNum){
+        while (current != nullptr) {
+            if (current->task->taskNum < minNode->task->taskNum) {
                 minNode = current;
             }
             current = current->next;
         }
-        if (minNode == first){
-            removeFirst();
-        } else if (minNode == last){
-            pop();
-        }
-        else { 
-            removeThisNode(minNode);
-        }
+
+        // remove minNode from this list
+        removeThisNode(minNode);
+
+        // add it to the end of sortedList
         sortedList.push(minNode);
     }
 
-    first = sortedList.first; 
-    last = sortedList.last; 
-    ct = sortedList.ct; 
-    sortedList.first = sortedList.last = nullptr; 
-    sortedList.ct = 0; 
+    first = sortedList.first;
+    last = sortedList.last;
+    ct = sortedList.ct;
+
+    sortedList.first = sortedList.last = nullptr;
+    sortedList.ct = 0;
 }
 
 
@@ -430,10 +458,13 @@ DLL::~DLL() {
      * write the destructor for the DLL .  Just delete all the nodes
      * in the list.
      */
-    for (int i = 0; i < ct; i++){
+    while (first != nullptr) {
         DNode* temp = removeFirst();
         delete temp;
     }
+    // ensure counts/pointers consistent
+    ct = 0;
+    first = last = nullptr;
 }
 
 
